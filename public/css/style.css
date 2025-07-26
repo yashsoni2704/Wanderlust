@@ -100,3 +100,12 @@ body{
 .add-btn{
     background-color: #fe424d !important;
 }
+.show-img{
+    
+    height: 30vh;
+    
+}
+.btns{
+    display: flex;
+     
+}
