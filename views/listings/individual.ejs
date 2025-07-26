@@ -1,0 +1,29 @@
+<% layout("/layouts/boilerplate") %>
+<body>
+    <h1>Listing Details : </h1>
+    <div class="list">
+        <ul>
+            <li>
+                <%=listing.title%>
+            </li>
+            <li>
+                <%=listing.description%>
+            </li>
+            <li>₹<%=listing.price.toLocaleString("en-IN")%></li>
+            <li>
+                <%=listing.location%>
+            </li>
+            <li>
+                <%=listing.country%>
+            </li>
+        </ul>
+        <form action="/listings/<%=listing._id%>/edit">
+            <button class="btn btn-dark add-btn mt-3">Edit</button>
+        </form><br>
+        <form action="/listings">
+            <button href="/" class="btn btn-dark mt-3">Go Back</button>
+        </form>
+        <!-- <a href="">Edit this Listing</a> -->
+
+    </div>
+</body>
