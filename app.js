@@ -6,7 +6,8 @@ const methodOverride = require("method-override");
 const path = require("path");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
-const wrapAsync = require("./utils/wrapAsync.js");
+const wrapAsync = require("./utils/wrapAsync.js"); 
+const Review = require("./models/review.js");
 
 // Database Connection
 async function main() {
@@ -70,6 +71,25 @@ app.get("/listings/:id", wrapAsync(async (req, res) => {
     res.render("listings/individual.ejs", { listing });
 }));
 
+//Review Route - Add a review to a listing
+app.post("/listings/:id/reviews", wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    const listing = await Listing.findById(id);
+    if (!listing) throw new ExpressError("Listing Not Found", 404);
+
+    // Create a new Review
+    const { rating, comment } = req.body.review;
+    const review = new Review({ rating, comment });
+    await review.save();
+
+    // Push review _id into listing.reviews
+    listing.reviews.push(review);
+    await listing.save();
+
+    console.log("New Review Added:", review);
+    res.redirect(`/listings/${id}`);
+}));
+
 // Edit Route - Form to edit listing
 app.get("/listings/:id/edit", wrapAsync(async (req, res) => {
     const { id } = req.params;
@@ -108,5 +128,5 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(9000, () => {
-    console.log("Server is running on http://localhost:9000");
+    console.log("Server is running on http://localhost:9000/listings");
 });
