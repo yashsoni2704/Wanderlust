@@ -111,6 +111,21 @@ app.post("/listings/:id/reviews", validateReview, wrapAsync(async (req, res) => 
     res.redirect(`/listings/${id}`);
 }));
 
+// Delete Review Route - Delete a review from a listing
+app.delete("/listings/:id/reviews/:reviewId", wrapAsync(async (req, res) => {
+    const { id, reviewId } = req.params;
+    const listing = await Listing.findById(id);
+    if (!listing) throw new ExpressError("Listing Not Found", 404);
+
+    // Remove review from listing
+    listing.reviews.pull(reviewId);
+    await listing.save();
+
+    // Delete review document
+    await Review.findByIdAndDelete(reviewId);
+    res.redirect(`/listings/${id}`);
+}));
+
 // Edit Route - Form to edit listing
 app.get("/listings/:id/edit", wrapAsync(async (req, res) => {
     const { id } = req.params;
