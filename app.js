@@ -8,6 +8,8 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const wrapAsync = require("./utils/wrapAsync.js"); 
 const Review = require("./models/review.js");
+const {listingSchema} = require("./schema.js");
+const {reviewSchema} = require("./schema.js");
 
 // Database Connection
 async function main() {
@@ -37,6 +39,25 @@ app.get("/", (req, res) => {
     res.send("Home root");
 });
 
+const validateListing = (req,res,next)=>{
+let {error} = listingSchema.validate(req.body);
+if(error){
+    let errMsg = error.details.map(el=>el.message).join(",");
+    throw new ExpressError(errMsg,400);
+}else{
+    next();
+}
+}
+const validateReview = (req,res,next)=>{
+let {error} = reviewSchema.validate(req.body);
+if(error){
+    let errMsg = error.details.map(el=>el.message).join(",");
+    throw new ExpressError(errMsg,400);
+}else{
+    next();
+}
+}
+
 // Index Route - Show all listings
 app.get("/listings", wrapAsync(async (req, res) => {
     const allListings = await Listing.find({});
@@ -49,7 +70,7 @@ app.get("/listings/new", (req, res) => {
 });
 
 // Create Route - Create new listing
-app.post("/listings", wrapAsync(async (req, res) => {
+app.post("/listings",validateListing, wrapAsync(async (req, res) => {
     if(!req.body.listing){
         throw new ExpressError("Invalid Listing Data", 400);
     };
@@ -64,7 +85,7 @@ app.post("/listings", wrapAsync(async (req, res) => {
 // Show Route - Show individual listing
 app.get("/listings/:id", wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findById(id).populate("reviews");
     if (!listing) {
         throw new ExpressError("Listing Not Found", 404);
     }
@@ -72,7 +93,7 @@ app.get("/listings/:id", wrapAsync(async (req, res) => {
 }));
 
 //Review Route - Add a review to a listing
-app.post("/listings/:id/reviews", wrapAsync(async (req, res) => {
+app.post("/listings/:id/reviews", validateReview, wrapAsync(async (req, res) => {
     const { id } = req.params;
     const listing = await Listing.findById(id);
     if (!listing) throw new ExpressError("Listing Not Found", 404);
