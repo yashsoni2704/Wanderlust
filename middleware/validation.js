@@ -41,15 +41,25 @@ const validateUser = (req, res, next) => {
 };
 const isLoggedIn = (req, res, next) => {
     if (!req.isAuthenticated()) {
+        req.session.redirecturl = req.originalUrl;
         req.flash("error", "You must be signed in first!");
         return res.redirect("/login");
     }
     next();
 };
-
+const saveRedirectUrl = (req, res, next) => {
+    if (req.session.redirecturl) {
+        res.locals.redirecturl = req.session.redirecturl;
+        delete req.session.redirecturl;  // Clear it from session after storing in res.locals
+    } else {
+        res.locals.redirecturl = '/listings';  // Default redirect if none saved
+    }
+    next();
+};
 module.exports = {
     validateListing,
     validateReview,
     validateUser,
-    isLoggedIn
+    isLoggedIn,
+    saveRedirectUrl
 };

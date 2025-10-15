@@ -3,7 +3,7 @@ const router = express.Router();
 const User = require("../models/user.js");
 const passport = require("passport");
 const wrapAsync = require("../utils/wrapAsync.js");
-const { validateUser } = require("../middleware/validation.js");
+const { validateUser, saveRedirectUrl } = require("../middleware/validation.js");
 
 // Register Route - Show registration form
 router.get("/signup", (req, res) => {
@@ -44,7 +44,7 @@ router.get("/login", (req, res) => {
 });
 
 // Login route
-router.post("/login", (req, res, next) => {
+router.post("/login", saveRedirectUrl, (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
         if (err) {
             return next(err);
@@ -65,7 +65,8 @@ router.post("/login", (req, res, next) => {
                 return next(err);
             }
             req.flash("success", "Welcome back to Wanderlust!");
-            res.redirect("/listings");
+            let redirectUrl = res.locals.redirecturl || '/listings';
+            res.redirect(redirectUrl);
         });
     })(req, res, next);
 });
