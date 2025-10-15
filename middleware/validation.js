@@ -1,5 +1,5 @@
 const ExpressError = require("../utils/ExpressError");
-const { listingSchema, reviewSchema } = require("../schema.js");
+const { listingSchema, reviewSchema, userSchema } = require("../schema.js");
 
 const validateListing = (req, res, next) => {
     let { error } = listingSchema.validate(req.body, { abortEarly: false });
@@ -30,7 +30,26 @@ const validateReview = (req, res, next) => {
     }
 };
 
+const validateUser = (req, res, next) => {
+    let { error } = userSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map(el => el.message).join(",");
+        req.flash("error", errMsg);
+        return res.redirect("/signup");
+    }
+    next();
+};
+const isLoggedIn = (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        req.flash("error", "You must be signed in first!");
+        return res.redirect("/login");
+    }
+    next();
+};
+
 module.exports = {
     validateListing,
-    validateReview
+    validateReview,
+    validateUser,
+    isLoggedIn
 };

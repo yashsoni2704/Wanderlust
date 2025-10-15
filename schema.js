@@ -44,9 +44,53 @@ module.exports.listingSchema = joi.object({
     }).required(),
 });
 
+module.exports.userSchema = joi.object({
+    user: joi.object({
+        username: joi.string().required().min(3).max(30)
+            .messages({
+                'string.empty': 'Username cannot be empty',
+                'string.min': 'Username must be at least 3 characters long',
+                'string.max': 'Username cannot be longer than 30 characters',
+                'any.required': 'Username is required'
+            }),
+        email: joi.string().required().email()
+            .messages({
+                'string.empty': 'Email cannot be empty',
+                'string.email': 'Please provide a valid email address',
+                'any.required': 'Email is required'
+            }),
+        password: joi.string().required().min(6)
+            .messages({
+                'string.empty': 'Password cannot be empty',
+                'string.min': 'Password must be at least 6 characters long',
+                'any.required': 'Password is required'
+            })
+    }).required()
+});
+
 module.exports.reviewSchema = joi.object({
     review:joi.object({
         rating:joi.number().required().min(1).max(5),
         comment:joi.string().required(),
     })
 }).required();
+
+module.exports.reviewSchema = joi.object({
+    review: joi.object({
+        rating: joi.number().required().min(1).max(5)
+            .messages({
+                'number.base': 'Rating must be a number',
+                'number.empty': 'Rating cannot be empty',
+                'number.min': 'Rating must be at least 1',
+                'number.max': 'Rating cannot exceed 5',
+                'any.required': 'Rating is required'
+            }),
+        comment: joi.string().required().min(5).max(1000)
+            .messages({
+                'string.empty': 'Comment cannot be empty',
+                'string.min': 'Comment must be at least 5 characters long',
+                'string.max': 'Comment cannot be longer than 1000 characters',
+                'any.required': 'Comment is required'
+            })
+    }).required()
+});
