@@ -48,7 +48,7 @@ router.post("/", isLoggedIn, validateListing, wrapAsync(async (req, res) => {
 // Show Route - Show individual listing
 router.get("/:id", wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const listing = await Listing.findById(id).populate("reviews").populate("owner");
+    const listing = await Listing.findById(id).populate({path:"reviews", populate:{path:"author"}}).populate("owner");
     if (!listing) {
         req.flash('error', 'Cannot find that listing!');
         return res.redirect('/listings');
@@ -72,6 +72,11 @@ router.get("/:id/edit", isLoggedIn, wrapAsync(async (req, res) => {
 // Update Route - Update listing
 router.put("/:id", isLoggedIn, wrapAsync(async (req, res) => {
     const { id } = req.params;
+    const listing = await Listing.findById(id);
+    if(listing.owner && !listing.owner.equals(req.user._id)){
+        req.flash("error", "You do not have permission to edit this listing!");
+        return res.redirect(`/listings/${id}`);
+    }
     await Listing.findByIdAndUpdate(id, { ...req.body.listing });
     req.flash('success', 'Successfully updated the listing!');
     res.redirect(`/listings/${id}`);
@@ -80,6 +85,11 @@ router.put("/:id", isLoggedIn, wrapAsync(async (req, res) => {
 // Delete Route - Delete listing
 router.delete("/:id/delete", isLoggedIn, wrapAsync(async (req, res) => {
     const { id } = req.params;
+    const listing = await Listing.findById(id);
+    if(listing.owner && !listing.owner.equals(req.user._id)){
+        req.flash("error", "You do not have permission to delete this listing!");
+        return res.redirect(`/listings/${id}`);
+    }
     await Listing.findByIdAndDelete(id);
     req.flash('success', 'Successfully deleted a listing!');
     res.redirect("/listings");

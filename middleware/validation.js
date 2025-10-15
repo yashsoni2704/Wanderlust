@@ -1,5 +1,6 @@
 const ExpressError = require("../utils/ExpressError");
 const { listingSchema, reviewSchema, userSchema } = require("../schema.js");
+const Review = require("../models/review.js");
 
 const validateListing = (req, res, next) => {
     let { error } = listingSchema.validate(req.body, { abortEarly: false });
@@ -47,6 +48,20 @@ const isLoggedIn = (req, res, next) => {
     }
     next();
 };
+
+const isReviewAuthor = async (req, res, next) => {
+    const { id, reviewId } = req.params;
+    const review = await Review.findById(reviewId);
+    if (!review) {
+        req.flash("error", "Review not found!");
+        return res.redirect(`/listings/${id}`);
+    }
+    if (!review.author.equals(req.user._id)) {
+        req.flash("error", "You don't have permission to delete this review!");
+        return res.redirect(`/listings/${id}`);
+    }
+    next();
+};
 const saveRedirectUrl = (req, res, next) => {
     if (req.session.redirecturl) {
         res.locals.redirecturl = req.session.redirecturl;
@@ -56,10 +71,27 @@ const saveRedirectUrl = (req, res, next) => {
     }
     next();
 };
+
+const isAuthor = async (req, res, next) => {
+    const { id, reviewId } = req.params;
+    const review = await Review.findById(reviewId);
+    if (!review) {
+        return next(new ExpressError("Review not found", 404));
+    }
+    if (!review.author.equals(req.user._id)) {
+        req.flash("error", "You do not have permission to do that");
+        return res.redirect(`/listings/${id}`);
+    }
+    next();
+};
+
+// Export all middleware functions (single export at end, after declarations)
 module.exports = {
     validateListing,
     validateReview,
     validateUser,
     isLoggedIn,
-    saveRedirectUrl
+    isReviewAuthor,
+    saveRedirectUrl,
+    isAuthor
 };

@@ -4,11 +4,11 @@ const Listing = require("../models/listing.js");
 const Review = require("../models/review.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
-const { validateListing, validateReview } = require("../middleware/validation.js");
+const { validateReview, isLoggedIn, isReviewAuthor } = require("../middleware/validation.js");
 
 
 //Review Route - Add a review to a listing
-router.post("/", validateReview, wrapAsync(async (req, res) => {
+router.post("/", isLoggedIn, validateReview, wrapAsync(async (req, res) => {
     const { id } = req.params;
     const listing = await Listing.findById(id);
     if (!listing) throw new ExpressError("Listing Not Found", 404);
@@ -16,6 +16,7 @@ router.post("/", validateReview, wrapAsync(async (req, res) => {
     // Create a new Review
     const { rating, comment } = req.body.review;
     const review = new Review({ rating, comment });
+    review.author = req.user._id; // Set the author to the currently logged-in user
     await review.save();
 
     // Push review _id into listing.reviews
@@ -28,14 +29,11 @@ router.post("/", validateReview, wrapAsync(async (req, res) => {
 }));
 
 // Delete Review Route - Delete a review from a listing
-router.delete("/:reviewId", wrapAsync(async (req, res) => {
-    const { reviewId } = req.params;
-    const listing = await Listing.findOne({ reviews: reviewId });
-    if (!listing) throw new ExpressError("Listing Not Found", 404);
-
+router.delete("/:reviewId", isLoggedIn, isReviewAuthor, wrapAsync(async (req, res) => {
+    const { id, reviewId } = req.params;
+    
     // Remove review from listing
-    listing.reviews.pull(reviewId);
-    await listing.save();
+    await Listing.findByIdAndUpdate(id, {$pull: {reviews: reviewId}});
 
     // Delete review document
     await Review.findByIdAndDelete(reviewId);

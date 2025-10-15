@@ -9,10 +9,9 @@ module.exports.listingSchema = joi.object({
                 'string.max': 'Title cannot be longer than 100 characters',
                 'any.required': 'Title is required'
             }),
-        description: joi.string().required().max(1000)
+        description: joi.string().required()
             .messages({
                 'string.empty': 'Description cannot be empty',
-                'string.max': 'Description cannot be longer than 1000 characters',
                 'any.required': 'Description is required'
             }),
         location: joi.string().required().min(3).max(100)
@@ -46,7 +45,7 @@ module.exports.listingSchema = joi.object({
 
 module.exports.userSchema = joi.object({
     user: joi.object({
-        username: joi.string().required().min(3).max(30)
+        username: joi.string().required().max(30)
             .messages({
                 'string.empty': 'Username cannot be empty',
                 'string.min': 'Username must be at least 3 characters long',
@@ -81,15 +80,11 @@ module.exports.reviewSchema = joi.object({
             .messages({
                 'number.base': 'Rating must be a number',
                 'number.empty': 'Rating cannot be empty',
-                'number.min': 'Rating must be at least 1',
-                'number.max': 'Rating cannot exceed 5',
                 'any.required': 'Rating is required'
             }),
-        comment: joi.string().required().min(5).max(1000)
+        comment: joi.string().required()
             .messages({
                 'string.empty': 'Comment cannot be empty',
-                'string.min': 'Comment must be at least 5 characters long',
-                'string.max': 'Comment cannot be longer than 1000 characters',
                 'any.required': 'Comment is required'
             })
     }).required()
