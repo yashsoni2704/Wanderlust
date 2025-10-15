@@ -8,7 +8,7 @@ const { validateListing, isLoggedIn } = require("../middleware/validation.js");
 
 // Index Route - Show all listings
 router.get("/", wrapAsync(async (req, res) => {
-    const allListings = await Listing.find({});
+    const allListings = await Listing.find({}).populate("owner");
     res.render("listings/index.ejs", { allListings });
 }));
 
@@ -38,6 +38,8 @@ router.post("/", isLoggedIn, validateListing, wrapAsync(async (req, res) => {
     if(!newListing.title || !newListing.description || !newListing.price){
         throw new ExpressError("Data missing", 400);
     }
+    // Set the owner to the currently logged in user
+    newListing.owner = req.user._id;
     await newListing.save();
     req.flash('success', 'Successfully made a new listing!');
     res.redirect("/listings");
@@ -46,7 +48,7 @@ router.post("/", isLoggedIn, validateListing, wrapAsync(async (req, res) => {
 // Show Route - Show individual listing
 router.get("/:id", wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const listing = await Listing.findById(id).populate("reviews");
+    const listing = await Listing.findById(id).populate("reviews").populate("owner");
     if (!listing) {
         req.flash('error', 'Cannot find that listing!');
         return res.redirect('/listings');
@@ -59,7 +61,7 @@ router.get("/:id", wrapAsync(async (req, res) => {
 // Edit Route - Form to edit listing
 router.get("/:id/edit", isLoggedIn, wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findById(id).populate("owner");
     if (!listing) {
         req.flash('error', 'Cannot find that listing!');
         return res.redirect('/listings');

@@ -40,7 +40,8 @@ const listingSchema = new Schema({
     minlength: [3, "Country must be at least 3 characters long"],
     maxlength: [50, "Country cannot be longer than 50 characters"]
   },
-  reviews:[{ type: Schema.Types.ObjectId, ref: "Review" }]
+  reviews:[{ type: Schema.Types.ObjectId, ref: "Review" }],
+  owner: { type: Schema.Types.ObjectId, ref: "User" }
 });
 
 listingSchema.post("findOneAndDelete", async function(listing){
