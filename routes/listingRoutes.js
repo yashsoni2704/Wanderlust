@@ -6,11 +6,17 @@ const wrapAsync = require("../utils/wrapAsync.js");
 const ExpressError = require("../utils/ExpressError.js");
 const { validateListing, isLoggedIn } = require("../middleware/validation.js");
 const listingController = require("../controllers/listings.js");
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
 
 router
 .route("/")
 .get(wrapAsync(listingController.index))
-.post(isLoggedIn, validateListing, wrapAsync(listingController.createListing)); 
+.post(isLoggedIn, validateListing, upload.single("listing[image]"), wrapAsync(listingController.createListing));
+// .post(upload.single("listing[image]"), (req, res) => {
+//     console.log(req.file); // Log the uploaded file information
+//     res.send(req.file);
+// });
 
 router
 .route("/new")

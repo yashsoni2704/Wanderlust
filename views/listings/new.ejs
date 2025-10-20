@@ -5,7 +5,7 @@
     <br>
     <div class="row">
         <div class="col-8 offset-2">
-    <form method="post" action="/listings" class="needs-validation" novalidate>
+    <form method="post" action="/listings" class="needs-validation" novalidate enctype="multipart/form-data">
         <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <input type="text" name="listing[title]" placeholder="Enter title" class="form-control" id="title" required/>
@@ -19,10 +19,10 @@
             <div class="invalid-feedback">Please provide a description.</div>
         </div>
         <div class="mb-3">
-            <label for="image" class="form-label">Image URL (optional)</label>
-            <input type="url" name="listing[image]" placeholder="Enter image URL (leave blank for default image)" class="form-control" id="image"/>
+            <label for="image" class="form-label">Image (optional)</label>
+            <input type="file" name="listing[image]" class="form-control" id="image"/>
             <div class="valid-feedback">Looks good!</div>
-            <div class="invalid-feedback">Please provide a valid URL format if adding an image.</div>
+            <div class="invalid-feedback">Please provide a valid image file if adding an image.</div>
         </div>
         <div class="row">
             <div class="mb-3 col-md-4">
