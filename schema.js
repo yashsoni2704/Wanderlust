@@ -36,9 +36,15 @@ module.exports.listingSchema = joi.object({
                 'number.max': 'Price cannot exceed 1,000,000',
                 'any.required': 'Price is required'
             }),
-        image: joi.string().allow("", null)
+        image: joi.alternatives().try(
+            joi.string().allow("", null),
+            joi.object({
+                url: joi.string().uri().required(),
+                filename: joi.string().allow("", null)
+            })
+        ).optional()
             .messages({
-                'string.uri': 'Image URL must be a valid image URL (jpg, jpeg, png, gif, or webp)',
+                'string.uri': 'Image URL must be a valid image URL (jpg, jpeg, png, gif, or webp)'
             }),
     }).required(),
 });
@@ -68,13 +74,6 @@ module.exports.userSchema = joi.object({
 });
 
 module.exports.reviewSchema = joi.object({
-    review:joi.object({
-        rating:joi.number().required().min(1).max(5),
-        comment:joi.string().required(),
-    })
-}).required();
-
-module.exports.reviewSchema = joi.object({
     review: joi.object({
         rating: joi.number().required().min(1).max(5)
             .messages({
@@ -88,4 +87,4 @@ module.exports.reviewSchema = joi.object({
                 'any.required': 'Comment is required'
             })
     }).required()
-});
+}).unknown(true);
