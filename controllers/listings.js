@@ -15,16 +15,18 @@ module.exports.createListing = async (req, res) => {
         throw new ExpressError("Invalid Listing Data", 400);
     };
     const listingData = req.body.listing;
-    // Handle image
-    if (!listingData.image || listingData.image.trim() === "") {
-        // If no image URL is provided, remove the image field to use schema defaults
-        delete listingData.image;
-    } else {
-        // If image URL is provided, set it with proper structure
+    
+    // Handle Cloudinary image upload
+    if (req.file) {
+        // If file was uploaded to Cloudinary, use the Cloudinary response
         listingData.image = {
-            url: listingData.image,
-            filename: 'userprovidedimage'
+            url: req.file.path,
+            filename: req.file.filename
         };
+        console.log("Image uploaded to Cloudinary:", req.file.path);
+    } else {
+        // If no image was uploaded, remove the image field to use schema defaults
+        delete listingData.image;
     }
     const newListing = new Listing(listingData);
     if(!newListing.title || !newListing.description || !newListing.price){
@@ -32,6 +34,10 @@ module.exports.createListing = async (req, res) => {
     }
     // Set the owner to the currently logged in user
     newListing.owner = req.user._id;
+    newListing.image = {
+        url: req.file.path,
+        filename: req.file.filename
+    };
     await newListing.save();
     req.flash('success', 'Successfully made a new listing!');
     res.redirect("/listings");
@@ -54,12 +60,20 @@ module.exports.editListing = async (req, res) => {
         req.flash('error', 'Cannot find that listing!');
         return res.redirect('/listings');
     }
+    if (!listing.owner || !listing.owner._id.equals(req.user._id)) {
+        req.flash("error", "You do not have permission to edit this listing!");
+        return res.redirect(`/listings/${id}`);
+    }
     res.render("listings/edit.ejs", { list: listing });
 }
 module.exports.updateListing = async (req, res) => {
     const { id } = req.params;
     const listing = await Listing.findById(id);
-    if(listing.owner && !listing.owner.equals(req.user._id)){
+    if (!listing) {
+        req.flash('error', 'Cannot find that listing!');
+        return res.redirect('/listings');
+    }
+    if (!listing.owner || !listing.owner.equals(req.user._id)) {
         req.flash("error", "You do not have permission to edit this listing!");
         return res.redirect(`/listings/${id}`);
     }
@@ -81,7 +95,11 @@ module.exports.updateListing = async (req, res) => {
 module.exports.deleteListing = async (req, res) => {
     const { id } = req.params;
     const listing = await Listing.findById(id);
-    if(listing.owner && !listing.owner.equals(req.user._id)){
+    if (!listing) {
+        req.flash('error', 'Cannot find that listing!');
+        return res.redirect('/listings');
+    }
+    if (!listing.owner || !listing.owner.equals(req.user._id)) {
         req.flash("error", "You do not have permission to delete this listing!");
         return res.redirect(`/listings/${id}`);
     }

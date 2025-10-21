@@ -13,14 +13,8 @@ const listingSchema = new Schema({
     maxlength: [1000, "Description cannot be longer than 1000 characters"]
   },
   image: {
-    url: {
-      type: String,
-      default: "https://images.unsplash.com/photo-1625505826533-5c80aca7d157?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGRlY29yYXRpb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60"
-    },
-    filename: {
-      type: String,
-      default: "defaultimage"
-    }
+    url: { type: String },
+    filename: { type: String, default: "defaultimage" }
   },
   price: { 
     type: Number, 
