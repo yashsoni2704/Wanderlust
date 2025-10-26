@@ -39,7 +39,7 @@ module.exports.logoutUser = (req, res, next) => {
     });
 }
 module.exports.loginUser = (req, res) => {
-    req.flash("success", "Welcome back!");
+    req.flash("success", `Welcome back ${req.user.username}` );
     const redirectUrl = res.locals.redirecturl || "/listings";
     res.redirect(redirectUrl);
 }

@@ -12,9 +12,18 @@
         </div>
         <div class="mb-3">
             <label for="description" class="form-label">Description</label>
-            <textarea name="listing[description]" id="description" cols="30" rows="5" class="form-control" required><%=list.description%></textarea>
+            <textarea name="listing[description]" id="description" cols="30" rows="2" class="form-control" required><%=list.description%></textarea>
             <div class="valid-feedback">Looks good!</div>
             <div class="invalid-feedback">Please provide a description.</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Current Image</label>
+            <div class="edit-form-image-container">
+                <img src="<%= originalImageUrl %>" alt="Current listing image" class="edit-form-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+                <div style="display:none; width:300px; height:200px; border:2px dashed #ccc; align-items:center; justify-content:center; background:#f8f9fa; border-radius:0.5rem;">
+                    <span style="color:#6c757d;">Image not available</span>
+                </div>
+            </div>
         </div>
         <div class="mb-3">
             <label for="image" class="form-label">Upload Image</label>

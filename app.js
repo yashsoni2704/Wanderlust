@@ -73,7 +73,9 @@ app.use("/", userRoutes);
 app.use("/listings", listingRoutes);
 app.use("/listings/:id/reviews", reviewRoutes);
 
-
+app.get("/testing",(req,res)=>{
+    res.send(res.locals.currentUser);
+});
 
 // Root Route
 app.get("/", (req, res) => {
@@ -99,3 +101,6 @@ app.use((err, req, res, next) => {
 app.listen(9000, () => {
     console.log("Server is running on http://localhost:9000/listings");
 });
+
+
+

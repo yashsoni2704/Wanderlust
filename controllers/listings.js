@@ -1,5 +1,6 @@
 const Listing = require("../models/listing");
 const ExpressError = require("../utils/ExpressError");
+const { cloudinary } = require("../cloudConfig");
 
 module.exports.index = async (req, res) => {
     const allListings = await Listing.find({}).populate("owner");
@@ -50,7 +51,9 @@ module.exports.showListing = async (req, res) => {
         req.flash('error', 'Cannot find that listing!');
         return res.redirect('/listings');
     }
-    res.render("listings/individual.ejs", { listing });
+    let originalImageUrl = listing.image.url;
+    originalImageUrl = originalImageUrl.replace("/upload/", "/upload/h_300,w_250");
+    res.render("listings/individual.ejs", { listing, originalImageUrl });
 }
 
 module.exports.editListing = async (req, res) => {
@@ -64,7 +67,18 @@ module.exports.editListing = async (req, res) => {
         req.flash("error", "You do not have permission to edit this listing!");
         return res.redirect(`/listings/${id}`);
     }
-    res.render("listings/edit.ejs", { list: listing });
+
+    // Create optimized image URL for edit form (smaller, fixed size)
+    let originalImageUrl = listing.image.url;
+    
+    if (originalImageUrl && originalImageUrl.includes("/upload/")) {
+        // Properly insert transformation parameters before the version number
+        originalImageUrl = originalImageUrl.replace("/upload/", "/upload/h_200,w_300,c_fill,f_auto,q_auto/");
+    } else {
+        originalImageUrl = "/images/default-listing.jpg"; // fallback image
+    }
+
+    res.render("listings/edit.ejs", { list: listing, originalImageUrl });
 }
 module.exports.updateListing = async (req, res) => {
     const { id } = req.params;
@@ -77,17 +91,22 @@ module.exports.updateListing = async (req, res) => {
         req.flash("error", "You do not have permission to edit this listing!");
         return res.redirect(`/listings/${id}`);
     }
+    
     const updateData = { ...req.body.listing };
-    // Normalize image field similar to create flow
-    if (Object.prototype.hasOwnProperty.call(updateData, 'image')) {
-        const incoming = updateData.image;
-        if (incoming == null || (typeof incoming === 'string' && incoming.trim() === "")) {
-            // If user cleared the field, don't overwrite image; remove from update to keep existing
-            delete updateData.image;
-        } else if (typeof incoming === 'string') {
-            updateData.image = { url: incoming, filename: 'userprovidedimage' };
-        } // if it's already an object with url/filename, leave as-is
+    
+    // Handle new image upload
+    if (req.file) {
+        // Delete old image from Cloudinary if it exists
+        if (listing.image && listing.image.filename && listing.image.filename !== 'defaultimage') {
+            await cloudinary.uploader.destroy(listing.image.filename);
+        }
+        // Set new image from uploaded file
+        updateData.image = {
+            url: req.file.path,
+            filename: req.file.filename
+        };
     }
+    
     await Listing.findByIdAndUpdate(id, updateData, { runValidators: true });
     req.flash('success', 'Successfully updated the listing!');
     res.redirect(`/listings/${id}`);
