@@ -1,4 +1,5 @@
 <% layout("/layouts/boilerplate") %>
+<!-- eslint-disable -->
     <div class="container">
         <div class="row mt-3">
             <!-- Left-aligned heading in same grid as card -->
@@ -100,5 +101,29 @@
                                                 <% } %>
                                         </div>
                         </div>
+
+                        <!-- Map Section -->
+                        <div class="col-12 mt-4">
+                            <div class="map-container">
+                                <div id="map" class="map"></div>
+                            </div>
+                        </div>
         </div>
     </div>
+
+    <!-- Leaflet CSS (Alternative to MapTiler SDK) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Leaflet Script (More reliable than MapTiler SDK) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Map initialization script -->
+    <script src="/js/map-init.js"></script>
+    
+    <script>
+        // Pass listing data to the map initialization function
+        // @ts-nocheck
+        // eslint-disable-next-line
+        const listingData = <%- JSON.stringify(listing) %>;
+        initializeMapWithData(listingData);
+    </script>

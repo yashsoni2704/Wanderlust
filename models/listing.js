@@ -34,6 +34,20 @@ const listingSchema = new Schema({
     minlength: [3, "Country must be at least 3 characters long"],
     maxlength: [50, "Country cannot be longer than 50 characters"]
   },
+  coordinates: {
+    latitude: { 
+      type: Number,
+      required: false,
+      min: [-90, "Latitude must be between -90 and 90"],
+      max: [90, "Latitude must be between -90 and 90"]
+    },
+    longitude: { 
+      type: Number,
+      required: false,
+      min: [-180, "Longitude must be between -180 and 180"],
+      max: [180, "Longitude must be between -180 and 180"]
+    }
+  },
   reviews:[{ type: Schema.Types.ObjectId, ref: "Review" }],
   owner: { type: Schema.Types.ObjectId, ref: "User" }
 });
