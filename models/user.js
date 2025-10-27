@@ -6,6 +6,14 @@ const userSchema = new Schema({
         type: String,
         required: true,
         unique: true
+    },
+    resetPasswordToken: {
+        type: String,
+        default: null
+    },
+    resetPasswordExpires: {
+        type: Date,
+        default: null
     }
 });
 userSchema.plugin(passportLocalMongoose);

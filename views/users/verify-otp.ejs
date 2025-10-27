@@ -1,0 +1,92 @@
+<%- layout("/layouts/boilerplate") %>
+    <div class="row">
+        <div class="col-8 offset-2">
+            <h1>Enter OTP</h1><br>
+            
+            <!-- Flash Messages -->
+            <% if (typeof locals !== 'undefined' && locals.success) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Success!</strong> <%= locals.success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+            
+            <% if (typeof locals !== 'undefined' && locals.error) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Error!</strong> <%= locals.error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+            
+            <% if (typeof locals !== 'undefined' && locals.info) { %>
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Info:</strong> <%= locals.info %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+
+            <form method="post" action="/verify-otp" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="otp" class="form-label">OTP Code</label>
+                    <input type="text" 
+                           name="otp" 
+                           placeholder="Enter OTP" 
+                           class="form-control text-center"
+                           id="otp" 
+                           maxlength="6"
+                           required 
+                           autocomplete="off" />
+                </div>
+                <br>
+                <button type="submit" class="btn btn-success">Verify OTP</button>
+            </form>
+            
+            <div class="text-center mt-3 btn btn-dark">
+                <a href="/forgot-password" class="text-decoration-none text-white">Resend OTP</a>
+            </div>
+            <br>
+            <div class="text-center mt-3 btn btn-dark">
+                <a href="/login" class="text-decoration-none text-white">Back to Login</a>
+            </div>
+            
+        </div>
+    </div>
+
+
+    <script>
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var otpInput = document.getElementById('otp');
+            if (!otpInput) return;
+            
+            // Only allow numbers
+            otpInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            // Auto-submit when 6 digits are entered
+            otpInput.addEventListener('input', function() {
+                if (this.value.length === 6) {
+                    this.form.submit();
+                }
+            });
+        });
+    </script>

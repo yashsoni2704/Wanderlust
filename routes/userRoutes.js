@@ -27,4 +27,22 @@ router
 // Logout route
 router.get("/logout", userController.logoutUser);
 
+// Forgot password routes
+router
+    .route("/forgot-password")
+    .get(userController.renderForgotPasswordForm)
+    .post(wrapAsync(userController.forgotPassword));
+
+// OTP verification routes
+router
+    .route("/verify-otp")
+    .get(userController.renderVerifyOtp)
+    .post(wrapAsync(userController.verifyOtp));
+
+// Reset password routes
+router
+    .route("/reset-password/:token")
+    .get(wrapAsync(userController.renderResetPasswordForm))
+    .post(wrapAsync(userController.resetPassword));
+
 module.exports = router;
