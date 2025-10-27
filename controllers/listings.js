@@ -35,10 +35,6 @@ module.exports.createListing = async (req, res) => {
     }
     // Set the owner to the currently logged in user
     newListing.owner = req.user._id;
-    newListing.image = {
-        url: req.file.path,
-        filename: req.file.filename
-    };
     await newListing.save();
     req.flash('success', 'Successfully made a new listing!');
     res.redirect("/listings");
@@ -71,9 +67,12 @@ module.exports.editListing = async (req, res) => {
     // Create optimized image URL for edit form (smaller, fixed size)
     let originalImageUrl = listing.image.url;
     
-    if (originalImageUrl && originalImageUrl.includes("/upload/")) {
-        // Properly insert transformation parameters before the version number
+    if (originalImageUrl && originalImageUrl.includes("cloudinary.com")) {
+        // For Cloudinary URLs, add transformation parameters
         originalImageUrl = originalImageUrl.replace("/upload/", "/upload/h_200,w_300,c_fill,f_auto,q_auto/");
+    } else if (originalImageUrl) {
+        // Keep original URL if it's not Cloudinary
+        originalImageUrl = originalImageUrl;
     } else {
         originalImageUrl = "/images/default-listing.jpg"; // fallback image
     }
@@ -81,35 +80,47 @@ module.exports.editListing = async (req, res) => {
     res.render("listings/edit.ejs", { list: listing, originalImageUrl });
 }
 module.exports.updateListing = async (req, res) => {
-    const { id } = req.params;
-    const listing = await Listing.findById(id);
-    if (!listing) {
-        req.flash('error', 'Cannot find that listing!');
-        return res.redirect('/listings');
-    }
-    if (!listing.owner || !listing.owner.equals(req.user._id)) {
-        req.flash("error", "You do not have permission to edit this listing!");
-        return res.redirect(`/listings/${id}`);
-    }
-    
-    const updateData = { ...req.body.listing };
-    
-    // Handle new image upload
-    if (req.file) {
-        // Delete old image from Cloudinary if it exists
-        if (listing.image && listing.image.filename && listing.image.filename !== 'defaultimage') {
-            await cloudinary.uploader.destroy(listing.image.filename);
+    try {
+        const { id } = req.params;
+        const listing = await Listing.findById(id);
+        if (!listing) {
+            req.flash('error', 'Cannot find that listing!');
+            return res.redirect('/listings');
         }
-        // Set new image from uploaded file
-        updateData.image = {
-            url: req.file.path,
-            filename: req.file.filename
-        };
+        if (!listing.owner || !listing.owner.equals(req.user._id)) {
+            req.flash("error", "You do not have permission to edit this listing!");
+            return res.redirect(`/listings/${id}`);
+        }
+        
+        const updateData = { ...req.body.listing };
+        
+        // Handle new image upload
+        if (req.file) {
+            console.log("New image uploaded:", req.file.path);
+            // Delete old image from Cloudinary if it exists
+            if (listing.image && listing.image.filename && listing.image.filename !== 'defaultimage') {
+                try {
+                    await cloudinary.uploader.destroy(listing.image.filename);
+                    console.log("Old image deleted from Cloudinary");
+                } catch (deleteError) {
+                    console.log("Error deleting old image:", deleteError.message);
+                }
+            }
+            // Set new image from uploaded file
+            updateData.image = {
+                url: req.file.path,
+                filename: req.file.filename
+            };
+        }
+        
+        await Listing.findByIdAndUpdate(id, updateData, { runValidators: true });
+        req.flash('success', 'Successfully updated the listing!');
+        res.redirect(`/listings/${id}`);
+    } catch (error) {
+        console.error("Error updating listing:", error);
+        req.flash('error', 'Failed to update listing. Please try again.');
+        res.redirect(`/listings/${req.params.id}/edit`);
     }
-    
-    await Listing.findByIdAndUpdate(id, updateData, { runValidators: true });
-    req.flash('success', 'Successfully updated the listing!');
-    res.redirect(`/listings/${id}`);
 }
 module.exports.deleteListing = async (req, res) => {
     const { id } = req.params;
