@@ -4,7 +4,48 @@
         <!-- <form method="get" action="/listings/new">
         <button>Make a new Listing</button>
     </form> -->
-    <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1">
+    <!-- Categories toolbar -->
+    <div class="categories-toolbar">
+        <div class="categories scroller">
+            <button class="category-item active" type="button">
+                <i class="fa-solid fa-fire"></i>
+                <span>Trending</span>
+            </button>
+            <button class="category-item" type="button">
+                <i class="fa-solid fa-bed"></i>
+                <span>Rooms</span>
+            </button>
+            <button class="category-item" type="button">
+                <i class="fa-solid fa-city"></i>
+                <span>Iconic Cities</span>
+            </button>
+            <button class="category-item" type="button">
+                <i class="fa-solid fa-mountain"></i>
+                <span>Mountains</span>
+            </button>
+            <button class="category-item" type="button">
+                <i class="fa-solid fa-tower-broadcast"></i>
+                <span>Castles</span>
+            </button>
+            <button class="category-item" type="button">
+                <i class="fa-solid fa-person-swimming"></i>
+                <span>Amazing Pools</span>
+            </button>
+            <button class="category-item" type="button">
+                <i class="fa-solid fa-campground"></i>
+                <span>Camping</span>
+            </button>
+            <button class="category-item" type="button">
+                <i class="fa-solid fa-tractor"></i>
+                <span>Farms</span>
+            </button>
+            <button class="category-item" type="button">
+                <i class="fa-regular fa-snowflake"></i>
+                <span>Arctic</span>
+            </button>
+        </div>
+    </div>
+    <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 mt-3">
             <%for(li of allListings){ %>
                 <br>
                 <div class="card col listing-card">
@@ -19,7 +60,8 @@
                             <% if(li.owner) { %>
                                 <i>Listed by: <%= li.owner.username %></i><br>
                             <% } %>
-                            ₹<%= li.price ? li.price.toLocaleString("en-IN") : '0' %> / night
+                            <% const showPrice = (typeof li.adjustedPrice !== 'undefined') ? li.adjustedPrice : li.price; %>
+                            ₹<%= showPrice ? showPrice.toLocaleString("en-IN") : '0' %> / night
                         </p>
                         <!-- <a href="#" class="btn btn-primary">Go somewhere</a> -->
                     </div>

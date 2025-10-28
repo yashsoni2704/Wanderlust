@@ -24,6 +24,25 @@
                                             <%= listing.location %><br>
                                                 <%= listing.country %><br>
                     </p>
+                    <div class="small text-muted">Total rooms: <%= listing.totalRooms || 1 %></div>
+                    <div id="roomsAvailability" class="small text-muted">
+                        <% if (typeof roomsLeftForRange !== 'undefined' && roomsLeftForRange !== null) { %>
+                            Available for selected dates: <%= roomsLeftForRange %>
+                        <% } %>
+                    </div>
+                    <% if (breakdown) { %>
+                        <div class="mt-2 p-2 border rounded">
+                            <div><strong>Price breakdown</strong></div>
+                            <div class="d-flex justify-content-between small"><span>₹<%= breakdown.perNight.toLocaleString('en-IN') %> x <%= breakdown.nights %> night(s)</span><span>₹<%= breakdown.subtotal.toLocaleString('en-IN') %></span></div>
+                            <div class="d-flex justify-content-between small"><span>Cleaning fee</span><span>₹<%= breakdown.cleaningFee.toLocaleString('en-IN') %></span></div>
+                            <div class="d-flex justify-content-between small"><span>Service fee</span><span>₹<%= breakdown.serviceFee.toLocaleString('en-IN') %></span></div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between"><strong>Total</strong><strong>₹<%= breakdown.total.toLocaleString('en-IN') %></strong></div>
+                            <% if (typeof roomsLeftForRange !== 'undefined' && roomsLeftForRange !== null) { %>
+                                <div class="mt-2 small text-muted">Rooms left for your dates: <%= roomsLeftForRange %></div>
+                            <% } %>
+                        </div>
+                    <% } %>
                 </div>
             </div>
 
@@ -46,6 +65,28 @@
 
                         <div class="col-8 offset-3 mb-3">
                             <hr>
+                            <h4>Book this stay</h4>
+                            <form method="post" action="/listings/<%= listing._id %>/book" class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Check‑in</label>
+                                    <input type="date" class="form-control" name="checkIn" value="<%= (checkIn || '') %>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Check‑out</label>
+                                    <input type="date" class="form-control" name="checkOut" value="<%= (checkOut || '') %>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Rooms</label>
+                                    <input type="number" class="form-control" name="rooms" min="1" value="1" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Guests</label>
+                                    <input type="number" class="form-control" name="guests" min="1" value="1" required>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-dark add-btn mt-2">Reserve</button>
+                                </div>
+                            </form>
                             <h4>Leave a Review</h4>
                             <form method="post" action="/listings/<%= listing._id %>/reviews" novalidate
                                 class="needs-validation">

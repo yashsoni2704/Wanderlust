@@ -1,10 +1,62 @@
 const Listing = require("../models/listing");
+const Booking = require("../models/booking");
 const ExpressError = require("../utils/ExpressError");
 const { cloudinary } = require("../cloudConfig");
+const { geocodeLocation } = require("../utils/geocoding");
 
 module.exports.index = async (req, res) => {
-    const allListings = await Listing.find({}).populate("owner");
-    res.render("listings/index.ejs", { allListings });
+    const { where, checkIn, checkOut, guests } = req.query;
+    let query = {};
+
+    // Basic text filter if where provided
+    if (where) {
+        const whereRegex = new RegExp(where.trim(), 'i');
+        query.$or = [
+            { location: whereRegex },
+            { country: whereRegex },
+            { title: whereRegex }
+        ];
+    }
+
+    // Guests hint: if provided, we can filter by price or any other heuristic later
+    // For now we don't have capacity field; skipping capacity filter.
+
+    const listings = await Listing.find(query).populate("owner");
+
+    // Compute dynamic price and rooms left if dates/guests provided
+    let parsedCheckIn = checkIn ? new Date(checkIn) : null;
+    let parsedCheckOut = checkOut ? new Date(checkOut) : null;
+    const numGuests = guests ? parseInt(guests, 10) : null;
+
+    const enriched = [];
+    for (const l of listings) {
+        let adjPrice = l.price;
+        let roomsLeft = l.totalRooms;
+
+        // Price scaling by guest capacity
+        if (numGuests && l.capacity) {
+            const groups = Math.ceil(numGuests / l.capacity);
+            adjPrice = l.price * groups; // simple multiplier per capacity group
+        }
+
+        // Rooms availability by existing bookings overlap
+        if (parsedCheckIn && parsedCheckOut) {
+            const overlaps = await Booking.aggregate([
+                { $match: { listing: l._id, checkIn: { $lt: parsedCheckOut }, checkOut: { $gt: parsedCheckIn } } },
+                { $group: { _id: "$listing", total: { $sum: "$roomsBooked" } } }
+            ]);
+            const booked = overlaps.length ? overlaps[0].total : 0;
+            roomsLeft = Math.max(0, l.totalRooms - booked);
+        }
+
+        enriched.push({
+            ...l.toObject(),
+            adjustedPrice: adjPrice,
+            roomsLeft
+        });
+    }
+
+    res.render("listings/index.ejs", { allListings: enriched });
 }
 
 module.exports.renderNewForm = (req, res) => {
@@ -29,6 +81,19 @@ module.exports.createListing = async (req, res) => {
         // If no image was uploaded, remove the image field to use schema defaults
         delete listingData.image;
     }
+    
+    // Geocode location to get coordinates
+    if (listingData.location && listingData.country) {
+        console.log(`Geocoding: ${listingData.location}, ${listingData.country}`);
+        const coordinates = await geocodeLocation(listingData.location, listingData.country);
+        if (coordinates) {
+            listingData.coordinates = coordinates;
+            console.log(`Coordinates found: ${coordinates.latitude}, ${coordinates.longitude}`);
+        } else {
+            console.log("Could not geocode location");
+        }
+    }
+    
     const newListing = new Listing(listingData);
     if(!newListing.title || !newListing.description || !newListing.price){
         throw new ExpressError("Data missing", 400);
@@ -49,7 +114,32 @@ module.exports.showListing = async (req, res) => {
     }
     let originalImageUrl = listing.image.url;
     originalImageUrl = originalImageUrl.replace("/upload/", "/upload/h_300,w_250");
-    res.render("listings/individual.ejs", { listing, originalImageUrl });
+    // Compute optional breakdown if query has dates/guests
+    const { checkIn, checkOut, guests } = req.query;
+    let breakdown = null;
+    let roomsLeftForRange = null;
+    if (checkIn && checkOut && guests) {
+        const numGuests = parseInt(guests, 10);
+        const groups = Math.ceil(numGuests / (listing.capacity || 1));
+        const start = new Date(checkIn);
+        const end = new Date(checkOut);
+        const nights = Math.max(1, Math.round((end - start) / (1000*60*60*24)));
+        const perNight = listing.price * groups;
+        const subtotal = perNight * nights;
+        const serviceFee = Math.round(subtotal * 0.12);
+        const cleaningFee = Math.round(0.05 * listing.price);
+        const total = subtotal + serviceFee + cleaningFee;
+        breakdown = { nights, perNight, subtotal, serviceFee, cleaningFee, total, groups };
+
+        // compute rooms left for the selected range
+        const overlaps = await Booking.aggregate([
+            { $match: { listing: listing._id, checkIn: { $lt: end }, checkOut: { $gt: start } } },
+            { $group: { _id: "$listing", total: { $sum: "$roomsBooked" } } }
+        ]);
+        const booked = overlaps.length ? overlaps[0].total : 0;
+        roomsLeftForRange = Math.max(0, (listing.totalRooms || 1) - booked);
+    }
+    res.render("listings/individual.ejs", { listing, originalImageUrl, breakdown, checkIn, checkOut, guests, roomsLeftForRange });
 }
 
 module.exports.editListing = async (req, res) => {
@@ -113,6 +203,19 @@ module.exports.updateListing = async (req, res) => {
             };
         }
         
+        // Geocode location if it was changed
+        if (updateData.location && updateData.country) {
+            const newLocation = updateData.location !== listing.location || updateData.country !== listing.country;
+            if (newLocation) {
+                console.log(`Geocoding updated location: ${updateData.location}, ${updateData.country}`);
+                const coordinates = await geocodeLocation(updateData.location, updateData.country);
+                if (coordinates) {
+                    updateData.coordinates = coordinates;
+                    console.log(`Updated coordinates: ${coordinates.latitude}, ${coordinates.longitude}`);
+                }
+            }
+        }
+        
         await Listing.findByIdAndUpdate(id, updateData, { runValidators: true });
         req.flash('success', 'Successfully updated the listing!');
         res.redirect(`/listings/${id}`);
@@ -136,4 +239,58 @@ module.exports.deleteListing = async (req, res) => {
     await Listing.findByIdAndDelete(id);
     req.flash('success', 'Successfully deleted a listing!');
     res.redirect("/listings");
+}
+
+// Create booking (decrement availability)
+module.exports.createBooking = async (req, res) => {
+    const { id } = req.params;
+    const { checkIn, checkOut, rooms = 1, guests = 1 } = req.body;
+    const listing = await Listing.findById(id);
+    if (!listing) {
+        req.flash('error', 'Listing not found');
+        return res.redirect('/listings');
+    }
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    if (!(start && end && end > start)) {
+        req.flash('error', 'Invalid dates');
+        return res.redirect(`/listings/${id}`);
+    }
+    // compute rooms left for range
+    const overlaps = await Booking.aggregate([
+        { $match: { listing: listing._id, checkIn: { $lt: end }, checkOut: { $gt: start } } },
+        { $group: { _id: "$listing", total: { $sum: "$roomsBooked" } } }
+    ]);
+    const booked = overlaps.length ? overlaps[0].total : 0;
+    const roomsLeft = Math.max(0, listing.totalRooms - booked);
+    const roomsRequested = Math.max(1, parseInt(rooms, 10));
+    if (roomsRequested > roomsLeft) {
+        req.flash('error', `Only ${roomsLeft} room(s) left for those dates`);
+        return res.redirect(`/listings/${id}`);
+    }
+    // Create pending booking; availability decreases after payment confirms
+    const booking = await Booking.create({ listing: listing._id, user: req.user?._id, checkIn: start, checkOut: end, roomsBooked: roomsRequested, guests: parseInt(guests, 10) || 1, status: 'pending' });
+    req.flash('success', 'Booking created! Complete payment to confirm.');
+    res.redirect(`/bookings`);
+}
+
+// Availability API for a listing over a date range
+module.exports.getAvailability = async (req, res) => {
+    const { id } = req.params;
+    const { checkIn, checkOut } = req.query;
+    const listing = await Listing.findById(id);
+    if (!listing) return res.status(404).json({ error: 'Listing not found' });
+    if (!checkIn || !checkOut) return res.status(400).json({ error: 'checkIn and checkOut required' });
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    if (!(start && end && end > start)) return res.status(400).json({ error: 'Invalid date range' });
+
+    // Count only confirmed bookings as blocking availability
+    const overlaps = await Booking.aggregate([
+        { $match: { listing: listing._id, status: 'confirmed', checkIn: { $lt: end }, checkOut: { $gt: start } } },
+        { $group: { _id: '$listing', total: { $sum: '$roomsBooked' } } }
+    ]);
+    const booked = overlaps.length ? overlaps[0].total : 0;
+    const roomsLeft = Math.max(0, (listing.totalRooms || 1) - booked);
+    return res.json({ roomsLeft, totalRooms: listing.totalRooms || 1 });
 }

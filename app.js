@@ -19,6 +19,7 @@ const User = require("./models/user.js");
 const listingRoutes = require("./routes/listingRoutes.js");
 const reviewRoutes = require("./routes/reviewRoutes.js");
 const userRoutes = require("./routes/userRoutes.js");
+const bookingRoutes = require("./routes/bookings.js");
 
 // Database Connection
 async function main() {
@@ -72,15 +73,16 @@ app.use((req, res, next) => {
 app.use("/", userRoutes);
 app.use("/listings", listingRoutes);
 app.use("/listings/:id/reviews", reviewRoutes);
+app.use("/bookings", bookingRoutes);
 
 app.get("/testing",(req,res)=>{
     res.send(res.locals.currentUser);
 });
 
-// Root Route
-app.get("/", (req, res) => {
-    res.send("Home root");
-});
+// // Root Route
+// app.get("/", (req, res) => {
+//     res.send("Home root");
+// });
 
 
 

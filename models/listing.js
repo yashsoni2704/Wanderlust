@@ -22,6 +22,16 @@ const listingSchema = new Schema({
     min: [0, "Price cannot be negative"],
     max: [1000000, "Price cannot exceed 1,000,000"]
   },
+  capacity: {
+    type: Number,
+    default: 2,
+    min: [1, "Capacity must be at least 1"]
+  },
+  totalRooms: {
+    type: Number,
+    default: 10,
+    min: [1, "Total rooms must be at least 1"]
+  },
   location: { 
     type: String,
     required: [true, "Location is required"],

@@ -1,0 +1,37 @@
+<% layout('/layouts/boilerplate') %>
+<div class="container">
+  <h3 class="mt-3">Complete payment</h3>
+  <p>Booking for <strong><%= booking.listing.title %></strong></p>
+  <% if (order.id) { %>
+    <p><small>Order: <%= order.id %></small></p>
+  <% } else { %>
+    <p class="text-muted small">Demo payment (no server order)</p>
+  <% } %>
+  <button id="rzp-btn" class="btn btn-dark">Pay with Razorpay (Test)</button>
+
+  <form id="successForm" method="post" action="/bookings/payment/success" class="d-none">
+    <input type="hidden" name="bookingId" value="<%= booking._id %>">
+  </form>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const options = {
+    key: '<%= rzKeyId %>',
+    amount: <%= order.amount %>,
+    currency: 'INR',
+    name: 'Wanderlust Demo',
+    description: 'Booking payment',
+    <% if (order.id) { %>order_id: '<%= order.id %>',<% } %>
+    handler: function (response){
+      document.getElementById('successForm').submit();
+    },
+    prefill: {},
+    theme: { color: '#fe424d' }
+  };
+  const rzp = new Razorpay(options);
+  document.getElementById('rzp-btn').onclick = function(e){
+    e.preventDefault(); rzp.open();
+  };
+</script>
+

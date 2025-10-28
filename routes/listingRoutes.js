@@ -30,6 +30,12 @@ router
 .put(isLoggedIn, upload.single("listing[image]"), validateListing, wrapAsync(listingController.updateListing))
 .delete(isLoggedIn, wrapAsync(listingController.deleteListing));
 
+// Booking endpoint
+router.post("/:id/book", isLoggedIn, wrapAsync(listingController.createBooking));
+
+// Availability API
+router.get('/:id/availability', wrapAsync(listingController.getAvailability));
+
 // Edit Route - Form to edit listing
 router.get("/:id/edit", isLoggedIn, wrapAsync(listingController.editListing));
 

@@ -1,24 +1,126 @@
 <nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/"><i class="fa-regular fa-compass"></i></a>
+    <a class="navbar-brand" href="/listings"><i class="fa-regular fa-compass"></i></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
-        <a class="nav-link" href="/listings">Home</a>
-        <a class="nav-link" href="/listings">All Listings</a>
-        <a class="nav-link" href="/listings/new">Add New Listing</a>
-        <a class="nav-link" href="#">Pricing</a>
+        <a class="nav-link" href="/listings">Explore</a>
       </div>
+
+      <!-- Center Airbnb-style search pill with unified panel -->
+      <div class="search-pill-wrapper d-none d-md-flex mx-auto" id="searchWrapper">
+        <form class="search-pill" action="/listings" method="get" role="search">
+          <button type="button" class="pill-segment text-start" id="whereBtn">
+            <div class="pill-label">Where</div>
+            <div class="pill-value" id="whereValue">Search destinations</div>
+          </button>
+          <button type="button" class="pill-segment text-start" id="whenBtn">
+            <div class="pill-label">When</div>
+            <div class="pill-value" id="whenValue">Add dates</div>
+          </button>
+          <button type="button" class="pill-segment text-start" id="whoBtn">
+            <div class="pill-label">Who</div>
+            <div class="pill-value" id="guestsValue">Add guests</div>
+          </button>
+          <button class="search-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </form>
+        <div class="search-panel dropdown-panel" id="searchPanel">
+          <div class="panel-section" id="whereSection">
+            <input type="text" class="form-control mb-2" id="whereInput" placeholder="Search destinations" />
+            <button type="button" class="btn btn-outline-dark w-100" id="useLocationBtn"><i class="fa-solid fa-location-crosshairs me-2"></i>Use my location</button>
+          </div>
+          <div class="panel-section d-none" id="whenSection">
+            <div class="row g-3 align-items-start">
+              <div class="col-4">
+                <div class="date-quick card p-3 mb-2" id="qpToday">
+                  <div class="fw-bold">Today</div>
+                  <div class="text-muted small" id="qpTodayLabel"></div>
+                </div>
+                <div class="date-quick card p-3 mb-2" id="qpTomorrow">
+                  <div class="fw-bold">Tomorrow</div>
+                  <div class="text-muted small" id="qpTomorrowLabel"></div>
+                </div>
+                <div class="date-quick card p-3" id="qpWeekend">
+                  <div class="fw-bold">This weekend</div>
+                  <div class="text-muted small" id="qpWeekendLabel"></div>
+                </div>
+              </div>
+              <div class="col-8">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="h6 mb-0" id="monthHeading"></div>
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="prevMonth"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="nextMonth"><i class="fa-solid fa-chevron-right"></i></button>
+                  </div>
+                </div>
+                <div class="row g-2">
+                  <div class="col-6"><label class="form-label small">Check‑in</label><input type="date" class="form-control" id="checkIn" /></div>
+                  <div class="col-6"><label class="form-label small">Check‑out</label><input type="date" class="form-control" id="checkOut" /></div>
+                </div>
+                <div class="text-muted mt-2 small">Tip: choose dates or use a quick pick on the left.</div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-section d-none" id="whoSection" style="min-width: 260px;">
+            <div class="guest-row">
+              <div>
+                <div class="guest-title">Adults</div>
+                <div class="guest-sub">Ages 13 or above</div>
+              </div>
+              <div class="guest-controls">
+                <button class="btn btn-outline-secondary btn-sm guest-minus" data-target="adults" type="button">-</button>
+                <span class="guest-count" id="adultsCount">0</span>
+                <button class="btn btn-outline-secondary btn-sm guest-plus" data-target="adults" type="button">+</button>
+              </div>
+            </div>
+            <div class="guest-row">
+              <div>
+                <div class="guest-title">Children</div>
+                <div class="guest-sub">Ages 2–12</div>
+              </div>
+              <div class="guest-controls">
+                <button class="btn btn-outline-secondary btn-sm guest-minus" data-target="children" type="button">-</button>
+                <span class="guest-count" id="childrenCount">0</span>
+                <button class="btn btn-outline-secondary btn-sm guest-plus" data-target="children" type="button">+</button>
+              </div>
+            </div>
+            <div class="guest-row">
+              <div>
+                <div class="guest-title">Infants</div>
+                <div class="guest-sub">Under 2</div>
+              </div>
+              <div class="guest-controls">
+                <button class="btn btn-outline-secondary btn-sm guest-minus" data-target="infants" type="button">-</button>
+                <span class="guest-count" id="infantsCount">0</span>
+                <button class="btn btn-outline-secondary btn-sm guest-plus" data-target="infants" type="button">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right menu with dropdown for auth -->
       <div class="navbar-nav ms-auto">
-       <% if(!currentUser) { %>
-        <a class="nav-link" href="/signup">Signup</a>
-        <a class="nav-link" href="/login">Login</a>
-       <% } else { %>
-        <span class="navbar-text me-3"><b><%= currentUser.username %></b></span>
-        <a class="nav-link" href="/logout">Logout</a>
-        <% } %>
+        <a class="nav-link" href="/listings/new">Become a host</a>
+        <div class="dropdown">
+          <button class="btn btn-light border rounded-pill px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-bars me-2"></i><i class="fa-regular fa-user"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <% if(!currentUser) { %>
+              <li><a class="dropdown-item" href="/signup">Sign up</a></li>
+              <li><a class="dropdown-item" href="/login">Log in</a></li>
+            <% } else { %>
+              <li><h6 class="dropdown-header">Signed in as <%= currentUser.username %></h6></li>
+              <li><a class="dropdown-item" href="/logout">Log out</a></li>
+              <li><a class="dropdown-item" href="/bookings">My bookings</a></li>
+            <% } %>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/listings">Explore</a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
