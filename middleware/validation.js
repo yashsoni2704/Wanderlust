@@ -72,19 +72,6 @@ const saveRedirectUrl = (req, res, next) => {
     next();
 };
 
-const isAuthor = async (req, res, next) => {
-    const { id, reviewId } = req.params;
-    const review = await Review.findById(reviewId);
-    if (!review) {
-        return next(new ExpressError("Review not found", 404));
-    }
-    if (!review.author.equals(req.user._id)) {
-        req.flash("error", "You do not have permission to do that");
-        return res.redirect(`/listings/${id}`);
-    }
-    next();
-};
-
 // Export all middleware functions (single export at end, after declarations)
 module.exports = {
     validateListing,
@@ -92,6 +79,5 @@ module.exports = {
     validateUser,
     isLoggedIn,
     isReviewAuthor,
-    saveRedirectUrl,
-    isAuthor
+    saveRedirectUrl
 };

@@ -22,7 +22,8 @@ const listingRoutes = require("./routes/listingRoutes.js");
 const reviewRoutes = require("./routes/reviewRoutes.js");
 const userRoutes = require("./routes/userRoutes.js");
 const bookingRoutes = require("./routes/bookings.js");
-const atlasUrl = process.env.ATLASDB_URL
+const atlasUrl = process.env.ATLASDB_URL || 'mongodb://127.0.0.1:27017/wanderlust';
+const sessionSecret = process.env.SESSION_SECRET || 'mysecretkey';
 // Database Connection
 async function main() {
     await mongoose.connect(atlasUrl);
@@ -49,7 +50,7 @@ app.use(express.static(path.join(__dirname, "public")));
 const store = MongoStore.create({
     mongoUrl: atlasUrl,
     crypto: {
-        secret: process.env.SESSION_SECRET
+        secret: sessionSecret
     },
     touchAfter: 24 * 3600,
 });
@@ -60,7 +61,7 @@ store.on("error", (err) => {
 
 const sessionConfig = {
     store,
-    secret: process.env.SESSION_SECRET,
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: true,
     cookie: {
