@@ -50,7 +50,7 @@ app.use(express.static(path.join(__dirname, "public")));
 const store = MongoStore.create({
     mongoUrl: atlasUrl,
     crypto: {
-        secret: sessionSecret
+        secret: process.env.SESSION_SECRET || "thisshouldbeabettersecret!"
     },
     touchAfter: 24 * 3600,
 });
@@ -61,13 +61,13 @@ store.on("error", (err) => {
 
 const sessionConfig = {
     store,
-    secret: sessionSecret,
+    secret: process.env.SESSION_SECRET || "thisshouldbeabettersecret!",
     resave: false,
     saveUninitialized: true,
     cookie: {
-        expires: Date.now() + 1000 * 60 * 60 * 24 * 7, // 1 week
-        maxAge: 1000 * 60 * 60 * 24 * 7,
         httpOnly: true,
+        expires: Date.now() + 1000 * 60 * 60 * 24 * 7, // 1 week
+        maxAge: 1000 * 60 * 60 * 24 * 7
     },
 };
 
