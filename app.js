@@ -96,10 +96,10 @@ app.get("/testing",(req,res)=>{
     res.send(res.locals.currentUser);
 });
 
-// // Root Route
-// app.get("/", (req, res) => {
-//     res.send("Home root");
-// });
+// Root Route
+app.get("/", (req, res) => {
+    res.redirect("/listings");
+});
 
 
 
